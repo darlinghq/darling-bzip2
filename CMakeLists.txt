@@ -19,7 +19,9 @@ add_definitions(-D_FILE_OFFSET_BITS=64)
 set(bzip2_sources
 	blocksort.c
 	bzlib.c
+	compress.c
 	crctable.c
+	decompress.c
 	huffman.c
 	randtable.c
 )

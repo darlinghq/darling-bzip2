@@ -26,11 +26,11 @@ set(bzip2_sources
 	randtable.c
 )
 
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib${SUFFIX}/darling")
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/darling")
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE) 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 add_library(bz2 SHARED ${bzip2_sources})
 target_link_libraries(bz2 system)
 
-install(TARGETS bz2 DESTINATION lib${SUFFIX}/darling)
+install(TARGETS bz2 DESTINATION ${CMAKE_INSTALL_LIBDIR}/darling)

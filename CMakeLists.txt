@@ -10,6 +10,7 @@ endif(COMMAND cmake_policy)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse -msse2 -msse3 -w -nostdinc")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__DARWIN_UNIX03 -fPIC -w")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -nostdlib -Wl,--version-script=${DARLING_TOP_DIRECTORY}/darwin.map")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
 include_directories(${DARLING_TOP_DIRECTORY}/platform-include)
@@ -32,5 +33,19 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 add_library(bz2 SHARED ${bzip2_sources})
 target_link_libraries(bz2 system)
-
 install(TARGETS bz2 DESTINATION ${CMAKE_INSTALL_LIBDIR}/darling)
+
+if (NOT DARLING_NO_EXECUTABLES)
+	include(darling_exe)
+	include(InstallSymlink)
+	set(BINARY_PACKAGING_MODE ON)
+
+	add_darling_executable(bzip2 bzip2.c)
+	target_link_libraries(bzip2 bz2)
+
+	install(TARGETS bzip2 DESTINATION libexec/darling/bin)
+
+	InstallSymlink(bzip2 libexec/darling/bin/bzcat)
+	InstallSymlink(bzip2 libexec/darling/bin/bunzip2)
+endif (NOT DARLING_NO_EXECUTABLES)
+

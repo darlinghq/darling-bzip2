@@ -38,14 +38,11 @@ install(TARGETS bz2 DESTINATION ${CMAKE_INSTALL_LIBDIR}/darling)
 if (NOT DARLING_NO_EXECUTABLES)
 	include(darling_exe)
 	include(InstallSymlink)
-	set(BINARY_PACKAGING_MODE ON)
 
 	add_darling_executable(bzip2 bzip2.c)
 	target_link_libraries(bzip2 bz2)
 
 	install(TARGETS bzip2 DESTINATION libexec/darling/bin)
-
-	InstallSymlink(bzip2 libexec/darling/bin/bzcat)
-	InstallSymlink(bzip2 libexec/darling/bin/bunzip2)
+	install(FILES bzcat bunzip2 DESTINATION libexec/darling/bin)
 endif (NOT DARLING_NO_EXECUTABLES)
 

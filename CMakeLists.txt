@@ -46,3 +46,11 @@ if (NOT DARLING_NO_EXECUTABLES)
 	install(FILES bzcat bunzip2 DESTINATION libexec/darling/bin)
 endif (NOT DARLING_NO_EXECUTABLES)
 
+set(man1
+	bzdiff.1
+	bzgrep.1
+	bzip2.1
+	bzmore.1
+)
+
+install(FILES ${man1} DESTINATION libexec/darling/usr/share/man/man1)

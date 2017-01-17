@@ -32,6 +32,7 @@ add_darling_library(bz2 SHARED ${bzip2_sources})
 target_link_libraries(bz2 system)
 set_target_properties(bz2 PROPERTIES OUTPUT_NAME "bz2.1.0")
 install(TARGETS bz2 DESTINATION libexec/darling/usr/lib)
+InstallSymlink("libbz2.1.0.dylib" "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/lib/libbz2.dylib")
 
 if (NOT DARLING_NO_EXECUTABLES)
 	include(darling_exe)

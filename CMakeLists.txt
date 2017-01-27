@@ -29,6 +29,7 @@ set(bzip2_sources
 
 set(DYLIB_INSTALL_NAME "/usr/lib/libbz2.1.0.dylib")
 add_darling_library(bz2 SHARED ${bzip2_sources})
+make_fat(bz2)
 target_link_libraries(bz2 system)
 set_target_properties(bz2 PROPERTIES OUTPUT_NAME "bz2.1.0")
 install(TARGETS bz2 DESTINATION libexec/darling/usr/lib)

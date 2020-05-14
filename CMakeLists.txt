@@ -13,7 +13,6 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -nostdlib")
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
-include_directories(${DARLING_TOP_DIRECTORY}/platform-include)
 
 add_definitions(-D_FILE_OFFSET_BITS=64)
 

@@ -152,6 +152,10 @@
 
 #endif /* BZ_LCCWIN32 */
 
+#ifdef __APPLE__
+#include <sys/attr.h>
+#include <copyfile.h>
+#endif
 
 /*---------------------------------------------*/
 /*--
@@ -1061,6 +1065,27 @@ void applySavedTimeInfoToOutputFile ( Char *dstName )
 #  endif
 }
 
+#ifdef __APPLE__
+static void
+clear_type_and_creator(char *path)
+{
+	struct attrlist alist;
+	struct {
+		u_int32_t length;
+		char info[32];
+	} abuf;
+
+	memset(&alist, 0, sizeof(alist));
+	alist.bitmapcount = ATTR_BIT_MAP_COUNT;
+	alist.commonattr = ATTR_CMN_FNDRINFO;
+
+	if (!getattrlist(path, &alist, &abuf, sizeof(abuf), 0) && abuf.length == sizeof(abuf)) {
+		memset(abuf.info, 0, 8);
+		setattrlist(path, &alist, abuf.info, sizeof(abuf.info), 0);
+	}
+}
+#endif /* __APPLE__ */
+
 static 
 void applySavedFileAttrToOutputFile ( IntNative fd )
 {
@@ -1071,6 +1096,10 @@ void applySavedFileAttrToOutputFile ( IntNative fd )
    ERROR_IF_NOT_ZERO ( retVal );
 
    (void) fchown ( fd, fileMetaInfo.st_uid, fileMetaInfo.st_gid );
+#if __APPLE__
+    copyfile(inName, outName, 0, COPYFILE_ACL | COPYFILE_XATTR);
+    clear_type_and_creator(outName);
+#endif
    /* chown() will in many cases return with EPERM, which can
       be safely ignored.
    */
@@ -1119,11 +1148,12 @@ Bool hasSuffix ( Char* s, const Char* suffix )
 static 
 Bool mapSuffix ( Char* name, 
                  const Char* oldSuffix, 
-                 const Char* newSuffix )
+                 const Char* newSuffix,
+	         size_t name_len )
 {
    if (!hasSuffix(name,oldSuffix)) return False;
    name[strlen(name)-strlen(oldSuffix)] = 0;
-   strcat ( name, newSuffix );
+   strlcat ( name, newSuffix, name_len );
    return True;
 }
 
@@ -1150,7 +1180,7 @@ void compress ( Char *name )
       case SM_F2F: 
          copyFileName ( inName, name );
          copyFileName ( outName, name );
-         strcat ( outName, ".bz2" ); 
+         strlcat ( outName, ".bz2", sizeof outName ); 
          break;
       case SM_F2O: 
          copyFileName ( inName, name );
@@ -1335,10 +1365,10 @@ void uncompress ( Char *name )
          copyFileName ( inName, name );
          copyFileName ( outName, name );
          for (i = 0; i < BZ_N_SUFFIX_PAIRS; i++)
-            if (mapSuffix(outName,zSuffix[i],unzSuffix[i]))
+            if (mapSuffix(outName,zSuffix[i],unzSuffix[i], sizeof outName))
                goto zzz; 
          cantGuess = True;
-         strcat ( outName, ".out" );
+         strlcat ( outName, ".out", sizeof outName );
          break;
       case SM_F2O: 
          copyFileName ( inName, name );
@@ -1730,8 +1760,9 @@ Cell *snocString ( Cell *root, Char *name )
 {
    if (root == NULL) {
       Cell *tmp = mkCell();
-      tmp->name = (Char*) myMalloc ( 5 + strlen(name) );
-      strcpy ( tmp->name, name );
+      size_t len = strlen(name) + 5;
+      tmp->name = (Char*) myMalloc ( len );
+      strlcpy ( tmp->name, name, len );
       return tmp;
    } else {
       Cell *tmp = root;

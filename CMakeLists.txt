@@ -51,14 +51,15 @@ if (NOT DARLING_NO_EXECUTABLES)
 	target_link_libraries(bzip2 bz2)
 
 	install(TARGETS bzip2 DESTINATION libexec/darling/bin)
-	install(FILES bzcat bunzip2 DESTINATION libexec/darling/bin)
+	InstallSymlink(bzip2 "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/bzcat")
+	InstallSymlink(bzip2 "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/bunzip2")
 endif (NOT DARLING_NO_EXECUTABLES)
 
 set(man1
-	bzdiff.1
-	bzgrep.1
-	bzip2.1
-	bzmore.1
+	bzip2/bzdiff.1
+	bzip2/bzgrep.1
+	bzip2/bzip2.1
+	bzip2/bzmore.1
 )
 
 install(FILES ${man1} DESTINATION libexec/darling/usr/share/man/man1)

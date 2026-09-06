@@ -57,8 +57,9 @@ if (NOT DARLING_NO_EXECUTABLES)
 	target_link_libraries(bzip2 bz2)
 
 	install(TARGETS bzip2 DESTINATION libexec/darling/bin)
-	InstallSymlink(bzip2 "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/bzcat")
-	InstallSymlink(bzip2 "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/bunzip2")
+	InstallSymlink(../../bin/bzip2 "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/bzip2")
+	InstallSymlink(../../bin/bzip2 "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/bzcat")
+	InstallSymlink(../../bin/bzip2 "${CMAKE_INSTALL_PREFIX}/libexec/darling/usr/bin/bunzip2")
 endif (NOT DARLING_NO_EXECUTABLES)
 
 set(man1

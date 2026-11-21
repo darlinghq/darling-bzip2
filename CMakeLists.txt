@@ -7,9 +7,10 @@ if(COMMAND cmake_policy)
 	cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-if (TARGET_i386 OR TARGET_x86_64)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse -msse2 -msse3")
-endif()
+# The SSE options are for the Intel slices only
+darling_archs(_sse_archs FAMILY x86)
+darling_xarch_flags(_sse_flags ARCHS ${_sse_archs} OPTIONS -msse -msse2 -msse3)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_sse_flags}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -nostdinc")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__DARWIN_UNIX03 -fPIC -w")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -nostdlib")
@@ -27,21 +28,21 @@ set(bzip2_sources
 	bzip2/randtable.c
 )
 
-if (TARGET_x86_64)
-	add_darling_object_library(bz264 bzip2/x86_64/crc32vec.S)
-	set_target_properties(bz264 PROPERTIES COMPILE_FLAGS "-arch x86_64")
-elseif (TARGET_ARM64)
-	add_darling_object_library(bz264 bzip2/arm64/crc32vec.S)
-	set_target_properties(bz264 PROPERTIES COMPILE_FLAGS "-arch arm64")
-else ()
-	add_darling_object_library(bz264 empty.c)
-endif ()
+# The vectorised CRC is assembly, one file per architecture (bzlib.c declares it for x86_64 and
+# arm64): each of those slices gets an object library of its own, compiled for that slice only.
+set(bz2_crc_objects "")
+foreach (arch IN LISTS DARLING_ARCHS)
+	if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bzip2/${arch}/crc32vec.S")
+		add_darling_object_library(bz2_crc_${arch} ARCHS ${arch} SOURCES bzip2/${arch}/crc32vec.S)
+		list(APPEND bz2_crc_objects $<TARGET_OBJECTS:bz2_crc_${arch}>)
+	endif ()
+endforeach ()
 
 set(DYLIB_INSTALL_NAME "/usr/lib/libbz2.1.0.dylib")
 set(DYLIB_COMPAT_VERSION "1.0.0")
 set(DYLIB_CURRENT_VERSION "1.0.5")
 
-add_darling_library(bz2 SHARED ${bzip2_sources} $<TARGET_OBJECTS:bz264>)
+add_darling_library(bz2 SHARED ${bzip2_sources} ${bz2_crc_objects})
 make_fat(bz2)
 target_link_libraries(bz2 system)
 set_target_properties(bz2 PROPERTIES OUTPUT_NAME "bz2.1.0")

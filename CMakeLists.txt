@@ -7,18 +7,10 @@ if(COMMAND cmake_policy)
 	cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-# Every enabled architecture gets its own flags: the SSE options are for the Intel slices only,
-# so they are scoped with -Xarch_<arch> and work for any combination of i386, x86_64 and arm64.
-set(bz2_archs "")
-if (TARGET_i386)
-	list(APPEND bz2_archs ${APPLE_ARCH_32BIT})
-endif ()
-list(APPEND bz2_archs ${APPLE_ARCH_64BIT_LIST})
-foreach (arch IN LISTS bz2_archs)
-	if (arch STREQUAL "i386" OR arch STREQUAL "x86_64")
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xarch_${arch} -msse -Xarch_${arch} -msse2 -Xarch_${arch} -msse3")
-	endif ()
-endforeach (arch)
+# The SSE options are for the Intel slices only
+darling_archs(_sse_archs FAMILY x86)
+darling_xarch_flags(_sse_flags ARCHS ${_sse_archs} OPTIONS -msse -msse2 -msse3)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_sse_flags}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -nostdinc")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__DARWIN_UNIX03 -fPIC -w")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -nostdlib")
@@ -36,23 +28,15 @@ set(bzip2_sources
 	bzip2/randtable.c
 )
 
-# The vectorised CRC is assembly, one file per architecture: each 64-bit slice gets its own object
-# library, compiled for that architecture only. `bz264` is the primary slice's.
+# The vectorised CRC is assembly, one file per architecture (bzlib.c declares it for x86_64 and
+# arm64): each of those slices gets an object library of its own, compiled for that slice only.
 set(bz2_crc_objects "")
-foreach (arch64 IN LISTS APPLE_ARCH_64BIT_LIST)
-	if (arch64 STREQUAL APPLE_ARCH_64BIT)
-		set(bz2_crc_target bz264)
-	else ()
-		set(bz2_crc_target bz264_${arch64})
+foreach (arch IN LISTS DARLING_ARCHS)
+	if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bzip2/${arch}/crc32vec.S")
+		add_darling_object_library(bz2_crc_${arch} ARCHS ${arch} SOURCES bzip2/${arch}/crc32vec.S)
+		list(APPEND bz2_crc_objects $<TARGET_OBJECTS:bz2_crc_${arch}>)
 	endif ()
-	add_darling_object_library(${bz2_crc_target} bzip2/${arch64}/crc32vec.S)
-	set_target_properties(${bz2_crc_target} PROPERTIES COMPILE_FLAGS "-arch ${arch64}")
-	list(APPEND bz2_crc_objects $<TARGET_OBJECTS:${bz2_crc_target}>)
-endforeach (arch64)
-if (NOT bz2_crc_objects)
-	add_darling_object_library(bz264 empty.c)
-	set(bz2_crc_objects $<TARGET_OBJECTS:bz264>)
-endif ()
+endforeach ()
 
 set(DYLIB_INSTALL_NAME "/usr/lib/libbz2.1.0.dylib")
 set(DYLIB_COMPAT_VERSION "1.0.0")
